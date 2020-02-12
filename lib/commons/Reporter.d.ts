@@ -33,21 +33,21 @@ export declare namespace Reporter {
      * @param msg text to log
      */
     function error(msg: string): void;
-    /**
-     * Adding Environment to allure report
-     * @param name name of the env
-     * @param value string
-     */
-    function addEnvironment(name: string, value?: string): void;
-    /**
-     * Adding issue name
-     * @param value name of the feature
-     */
-    function addTestId(value: string): void;
-    /**
-     * Adding description name
-     * @param description of the test
-     * @param descriptionType type (String, optional) – description type, text by default. Values ['text', 'html','markdown']
-     */
-    function addDescription(description: string, descriptionType?: string): void;
 }
+/**
+ * Adding Environment to allure report
+ * @param name name of the env
+ * @param value string
+ */
+export declare function addEnvironment(name: string, value?: string): void;
+/**
+ * Adding issue name
+ * @param value name of the feature
+ */
+export declare function addTestId(value: string): void;
+/**
+ * Adding description name
+ * @param description of the test
+ * @param descriptionType type (String, optional) – description type, text by default. Values ['text', 'html','markdown']
+ */
+export declare function addDescription(description: string, descriptionType?: string): void;

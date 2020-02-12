@@ -4,7 +4,7 @@ import chalk, { Chalk } from 'chalk';
 /**
  * Print to standard output
  */
-const printToConsole: boolean = process.env.PRINT_LOGS_TO_CONSOLE === 'true' || false;
+const printToConsole: boolean = true;
 
 const DEBUG: string = '[DEBUG]';
 const DEBUG_COLOR: Chalk = chalk.gray;
@@ -16,51 +16,20 @@ const ERROR: string = '[ERROR]';
 const ERROR_COLOR: Chalk = chalk.red;
 
 /**
- * Custom command for use with wdio-allure-reporter
- */
-class CustomCommand {
-  public title: string;
-  public bodyLabel: string;
-  public body: string;
-  constructor(title: string, bodyLabel: string, body: string) {
-    this.title = title;
-    this.body = `${body}`;
-    this.bodyLabel = bodyLabel;
-  }
-  public appendToBody(msg: string): void {
-    this.body += `${msg} \n`;
-  }
-}
-
-/**
  * Log to standard system out and allure report
  *
  * Each 'Step' log accumulate additional logs as attachment
  * until new 'Step' log arrived
  */
 export namespace Reporter {
-  let isStepClosed: boolean = true;
-  let currentStepTitle: string;
-  let customCommand: CustomCommand;
-
   /**
    * Close step in report
    */
   export function closeStep(isFailed?: boolean): void {
-    if (!isStepClosed) {
-      if (isFailed) {
-        sendCustomCommand(customCommand, 'failed');
-        browser.takeScreenshot();
-        allureReporter.addAttachment('Page HTML source', `${browser.getPageSource()}`);
-        allureReporter.addAttachment(
-          'Browser console logs',
-          `${JSON.stringify(browser.getLogs('browser'), undefined, 2)}`
-        );
-      } else {
-        sendCustomCommand(customCommand);
-      }
-    }
-    isStepClosed = true;
+    console.log(isFailed);
+    browser.takeScreenshot();
+    allureReporter.addAttachment('Page HTML source', `${browser.getPageSource()}`);
+    allureReporter.addAttachment('Browser console logs', `${JSON.stringify(browser.getLogs('browser'), undefined, 2)}`);
   }
 
   /**
@@ -71,16 +40,7 @@ export namespace Reporter {
   export function step(msg: string): void {
     toConsole(msg, STEP, STEP_COLOR);
 
-    if (!isStepClosed) {
-      closeStep();
-    }
-
-    currentStepTitle = `${STEP} - ${msg}`;
-    isStepClosed = false;
-
-    customCommand = new CustomCommand(currentStepTitle, 'more info', '');
-
-    customCommand.appendToBody(prettyMessage(STEP, msg));
+    allureReporter.addStep(`[STEP] - ${msg}`);
   }
 
   /**
@@ -90,7 +50,7 @@ export namespace Reporter {
    */
   export function debug(msg: string): void {
     toConsole(msg, DEBUG, DEBUG_COLOR);
-    addLogEntry(DEBUG, msg);
+    allureReporter.addStep(`[DEBUG] - ${msg}`);
   }
 
   /**
@@ -100,7 +60,7 @@ export namespace Reporter {
    */
   export function warning(msg: string): void {
     toConsole(msg, WARNING, WARNING_COLOR);
-    addLogEntry(WARNING, msg);
+    allureReporter.addStep(`[WARNING] - ${msg}`);
   }
 
   /**
@@ -110,65 +70,33 @@ export namespace Reporter {
    */
   export function error(msg: string): void {
     toConsole(msg, ERROR, ERROR_COLOR);
-    addLogEntry(ERROR, msg);
+    allureReporter.addStep(`[ERROR] - ${msg}`);
   }
+}
+/**
+ * Adding Environment to allure report
+ * @param name name of the env
+ * @param value string
+ */
+export function addEnvironment(name: string, value?: string): void {
+  allureReporter.addEnvironment(name, value);
+}
 
-  /**
-   * Adding Environment to allure report
-   * @param name name of the env
-   * @param value string
-   */
-  export function addEnvironment(name: string, value?: string): void {
-    allureReporter.addEnvironment(name, value);
-  }
+/**
+ * Adding issue name
+ * @param value name of the feature
+ */
+export function addTestId(value: string): void {
+  allureReporter.addTestId(value);
+}
 
-  /**
-   * Adding issue name
-   * @param value name of the feature
-   */
-  export function addTestId(value: string): void {
-    allureReporter.addTestId(value);
-  }
-
-  /**
-   * Adding description name
-   * @param description of the test
-   * @param descriptionType type (String, optional) – description type, text by default. Values ['text', 'html','markdown']
-   */
-  export function addDescription(description: string, descriptionType?: string): void {
-    allureReporter.addDescription(description, descriptionType);
-  }
-
-  /**
-   * Add log entry for allure reporter
-   * @param logType logType
-   * @param msg message
-   */
-  function addLogEntry(logType: string, msg: string): void {
-    if (!isStepClosed) {
-      customCommand.appendToBody(prettyMessage(logType, msg));
-    } else {
-      customCommand = new CustomCommand(`${logType} - ${msg}`, 'more info', prettyMessage(logType, msg));
-      sendCustomCommand(customCommand);
-    }
-  }
-
-  /**
-   * Adding custom command to allure reporter
-   * @param command command to add
-   * @param stepStatus status of steps
-   */
-  function sendCustomCommand(command: CustomCommand, stepStatus?: string): void {
-    let status: string = 'passed';
-    if (stepStatus !== undefined) {
-      status = stepStatus;
-    }
-    const stepContent: Object = {
-      content: command.body,
-      name: command.bodyLabel,
-    };
-    allureReporter.addStep(command.title, stepContent, status);
-  }
+/**
+ * Adding description name
+ * @param description of the test
+ * @param descriptionType type (String, optional) – description type, text by default. Values ['text', 'html','markdown']
+ */
+export function addDescription(description: string, descriptionType?: string): void {
+  allureReporter.addDescription(description, descriptionType);
 }
 
 /*
