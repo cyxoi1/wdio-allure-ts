@@ -50,8 +50,7 @@ export namespace Reporter {
    */
   export function debug(msg: string): void {
     toConsole(msg, DEBUG, DEBUG_COLOR);
-    allureReporter.addStep(`[DEBUG] - `,[msg]);
-
+    allureReporter.addStep(`[DEBUG] - `, [msg]);
   }
 
   /**
